@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import os
 from PIL import Image
+from sklearn.preprocessing import normalize
+
 
 st.set_page_config(layout="wide")
 st.title("급식 사진 유사/비유사 이미지 쌍 찾기")
@@ -32,6 +34,7 @@ if not (features_path.exists() and filenames_path.exists()):
     st.stop()
 
 features = np.load("features.npy")
+features = normalize(features, norm='l2')
 filenames = np.load("filenames.npy", allow_pickle=True)
 
 # 썸네일 생성 함수
@@ -44,7 +47,7 @@ def get_thumbnail(path, size=(128, 128)):
         return Image.new("RGB", size, (255,255,255))
 
 
-# 유클리드 거리로 가장 비슷/다른 쌍 찾기 (upper triangle만 사용, 중복 완전 제거)
+# 유클리드 유사도로 가장 비슷/다른 쌍 찾기 (upper triangle만 사용, 중복 완전 제거)
 from scipy.spatial.distance import pdist, squareform
 dist_matrix = squareform(pdist(features, metric="euclidean"))
 
@@ -89,7 +92,8 @@ df["filename"] = filenames
 # 산점도와 쌍 비교 이미지를 좌우로 배치
 col1, col2 = st.columns([1.2, 1.8])
 with col1:
-    st.header("급식 사진 t-SNE 산점도 (1위 쌍만 색상 강조)")
+    st.header("급식 사진 t-SNE 산점도 (원본 유사도 1위 쌍 강조)")
+    # 원본 feature 공간에서 가장 유사한 쌍을 t-SNE 공간에서도 강조
     highlight_idx = set(similar_pairs[0])
     df["highlight"] = ["highlight" if idx in highlight_idx else "normal" for idx in range(len(df))]
     fig = px.scatter(

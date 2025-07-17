@@ -2,9 +2,9 @@ import os
 import numpy as np
 import cv2
 import time
-from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.applications.resnet50 import preprocess_input
-from tensorflow.keras.models import Model
+from tensorflow.keras.applications import ResNet50 # type: ignore
+from tensorflow.keras.applications.resnet50 import preprocess_input # type: ignore
+from tensorflow.keras.models import Model # type: ignore
 
 def load_images_from_folder(folder):
     images = []
@@ -32,7 +32,9 @@ def extract_and_save_features(image_dir="images", features_path="features.npy", 
     features = []
     start = time.time()
     for img in images:
-        x = cv2.resize(img, (224, 224))
+        # BGR to RGB 변환 (중요!)
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        x = cv2.resize(img_rgb, (224, 224))
         x = np.expand_dims(x, axis=0)
         x = preprocess_input(x)
         feature = model.predict(x, verbose=0)
